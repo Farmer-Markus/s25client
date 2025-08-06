@@ -18,9 +18,17 @@ else()
     set(s25client_RC )
 endif()
 
-add_executable(s25client s25client.cpp commands.cpp ${s25client_RC})
-target_link_libraries(s25client PRIVATE s25Main Boost::program_options Boost::nowide rttr::vld)
-add_dependencies(s25client drivers)
+if(NOT ANDROID)
+  add_executable(s25client s25client.cpp commands.cpp ${s25client_RC})
+  target_link_libraries(s25client PRIVATE s25Main Boost::program_options Boost::nowide rttr::vld)
+  add_dependencies(s25client drivers)
+else()
+  add_library(main s25client.cpp commands.cpp ${s25client_RC})
+  target_link_libraries(main PRIVATE s25Main Boost::program_options Boost::nowide rttr::vld)
+  
+  # Without translations dependency the translations won't be build!
+  add_dependencies(main drivers translations)
+endif()
 
 if(WIN32)
     target_include_directories(s25client PRIVATE ${rcDir})
@@ -46,4 +54,6 @@ if(WIN32)
     gather_dll_copy(s25client)
 endif()
 
-INSTALL(TARGETS s25client RUNTIME DESTINATION ${RTTR_BINDIR})
+if(NOT ANDROID)
+  INSTALL(TARGETS s25client RUNTIME DESTINATION ${RTTR_BINDIR})
+endif()

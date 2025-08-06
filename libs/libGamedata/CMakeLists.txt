@@ -15,7 +15,9 @@ AddDirectory(lua)
 file(GLOB SOURCES_OTHER *.cpp *.h)
 source_group(other FILES ${SOURCES_OTHER})
 
-find_package(Lua 5.1 REQUIRED)
+if(NOT DEFINED ${LUA_LIBRARIES})
+  find_package(Lua 5.1 REQUIRED)
+endif()
 
 include(GatherDll)
 gather_dll(Lua)

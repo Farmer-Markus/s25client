@@ -22,9 +22,14 @@ if(DEFINED CMAKE_TOOLCHAIN_FILE)
     message(STATUS "Used Toolchain definition file '${CMAKE_TOOLCHAIN_FILE}'")
 endif()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules" "${CMAKE_SOURCE_DIR}/external/libutil/cmake")
+# To be able to have a parent project
+if(NOT DEFINED RTTR_SOURCE_DIR)
+  set(RTTR_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
+list(APPEND CMAKE_MODULE_PATH "${RTTR_SOURCE_DIR}/cmake/Modules" "${RTTR_SOURCE_DIR}/external/libutil/cmake")
 if(CMAKE_VERSION VERSION_LESS 3.14)
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/libutil/cmake/cmake_3.14")
+    list(APPEND CMAKE_MODULE_PATH "${RTTR_SOURCE_DIR}/external/libutil/cmake/cmake_3.14")
 endif()
 
 include(EnableCCache)
@@ -306,29 +311,41 @@ if(BUILD_TESTING)
     list(APPEND BoostPackages unit_test_framework)
 endif()
 
-find_package(Boost 1.71 COMPONENTS ${BoostPackages})
-if(NOT Boost_FOUND)
-    message(FATAL_ERROR "You have to install boost (>=1.71) into contrib/boost or set (as CMake or environment variable) "
-    "BOOST_ROOT (currently: '${BOOST_ROOT}', Environment: '$ENV{BOOST_ROOT}'), "
-    "BOOST_INCLUDEDIR (currently: '${BOOST_INCLUDEDIR}', Environment: '$ENV{BOOST_INCLUDEDIR}') "
-    "since cmake was unable to find boost!")
-endif()
+set(BOOST_SOURCE TRUE)
+foreach(BOOST_PACKAGE IN LISTS BoostPackages)
+  if(NOT TARGET Boost::${BOOST_PACKAGE})
+    set(BOOST_SOURCE FALSE)
+    message(WARNING "Boost package not a target: ${BOOST_PACKAGE}")
+  endif()
+endforeach()
 
-option(RTTR_USE_SYSTEM_BOOST_NOWIDE "Use system installed Boost.Nowide. Fails if not found!" "${RTTR_USE_SYSTEM_LIBS}")
+# If boost is NOT build from source, handle it the ususal way
+if(NOT ${BOOST_SOURCE})
+  find_package(Boost 1.71 COMPONENTS ${BoostPackages})
 
-if(Boost_VERSION_MINOR GREATER_EQUAL "74" OR RTTR_USE_SYSTEM_BOOST_NOWIDE)
-    # Boost 1.73 contains Boost.Nowide, 1.74 a required fix
-    find_package(Boost COMPONENTS nowide)
-endif()
-# Prefer system version, either as part of Boost or preinstalled
-if(NOT Boost_NOWIDE_FOUND)
-    if(RTTR_USE_SYSTEM_BOOST_NOWIDE)
-        set(bnw_required REQUIRED)
-    else()
-        set(bnw_required QUIET)
-    endif()
-    find_package(boost_nowide 11.0.0 ${bnw_required})
-    # Fallback in libutil, but find_package must be done here so all subprojects can use it
+  if(NOT Boost_FOUND)
+      message(FATAL_ERROR "You have to install boost (>=1.71) into contrib/boost or set (as CMake or environment variable) "
+      "BOOST_ROOT (currently: '${BOOST_ROOT}', Environment: '$ENV{BOOST_ROOT}'), "
+      "BOOST_INCLUDEDIR (currently: '${BOOST_INCLUDEDIR}', Environment: '$ENV{BOOST_INCLUDEDIR}') "
+      "since cmake was unable to find boost!")
+  endif()
+
+  option(RTTR_USE_SYSTEM_BOOST_NOWIDE "Use system installed Boost.Nowide. Fails if not found!" "${RTTR_USE_SYSTEM_LIBS}")
+
+  if(Boost_VERSION_MINOR GREATER_EQUAL "74" OR RTTR_USE_SYSTEM_BOOST_NOWIDE)
+      # Boost 1.73 contains Boost.Nowide, 1.74 a required fix
+      find_package(Boost COMPONENTS nowide)
+  endif()
+  # Prefer system version, either as part of Boost or preinstalled
+  if(NOT Boost_NOWIDE_FOUND)
+      if(RTTR_USE_SYSTEM_BOOST_NOWIDE)
+          set(bnw_required REQUIRED)
+      else()
+          set(bnw_required QUIET)
+      endif()
+      find_package(boost_nowide 11.0.0 ${bnw_required})
+      # Fallback in libutil, but find_package must be done here so all subprojects can use it
+  endif()
 endif()
 
 add_subdirectory(external)

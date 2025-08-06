@@ -51,7 +51,11 @@ add_subdirectory(liblobby)
 add_subdirectory(libsiedler2)
 add_subdirectory(libutil)
 add_subdirectory(mygettext)
-add_subdirectory(s25edit)
+
+if(NOT ANDROID)
+  add_subdirectory(s25edit)
+endif()
+
 if(RTTR_BUILD_UPDATER)
     add_subdirectory(s25update)
 endif()

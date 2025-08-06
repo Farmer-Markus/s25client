@@ -2,7 +2,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-find_package(BZip2 1.0.6 REQUIRED)
+if(NOT TARGET BZip2::BZip2)
+  find_package(BZip2 1.0.6 REQUIRED)
+endif()
 gather_dll(BZIP2)
 
 set(SOURCES_SUBDIRS )

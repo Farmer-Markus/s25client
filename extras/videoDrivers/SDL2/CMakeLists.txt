@@ -3,7 +3,12 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 set(SDL2_BUILDING_LIBRARY ON)
-find_package(SDL2 2.0.5)
+
+if(NOT TARGET SDL2_mixer)
+  find_package(SDL2 2.0.5)
+else()
+set(SDL2_FOUND TRUE)
+endif()
 
 if(SDL2_FOUND)
     add_library(videoSDL2 SHARED ${RTTR_DRIVER_INTERFACE} VideoSDL2.cpp VideoSDL2.h icon.h icon.cpp)
